@@ -20,9 +20,59 @@
         }
         body {
             font-family: 'Inter', system-ui, sans-serif;
-            background: linear-gradient(to bottom, #2C3E50, #1A1A2E);
+            background: linear-gradient(-45deg, #1A1A2E, #16213E, #0F3460, #533483);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
             color: var(--text-primary);
             min-height: 100vh;
+        }
+
+        @keyframes gradientBG {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        /* Add a subtle noise texture overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.05;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Add a subtle glow effect to cards */
+        .playlist-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .playlist-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .playlist-card:hover::after {
+            opacity: 1;
         }
         .sidebar-link, .sidebar-link span {
             color: var(--text-secondary);
@@ -45,11 +95,11 @@
             background: rgba(127,86,217,0.10);
         }
         .gradient-text {
-            background: linear-gradient(90deg, #7F56D9, #A78BFA);
+            background: linear-gradient(45deg, #E94560, #FF6B6B);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-fill-color: transparent;
+            animation: shimmer 3s infinite linear;
+            background-size: 200% 100%;
         }
         .main-content {
             max-width: 1200px;
@@ -445,6 +495,53 @@
         .equalizer-slider::-webkit-slider-thumb:hover {
             transform: scale(1.2);
         }
+
+        /* Premium Button Animations */
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .premium-button {
+            animation: float 3s ease-in-out infinite, pulse-glow 2s infinite;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .premium-button:hover {
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        .premium-button::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent,
+                rgba(255, 255, 255, 0.1),
+                transparent
+            );
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
     </style>
 </head>
 <body class="text-gray-800">
@@ -534,8 +631,13 @@
                                class="w-full pl-10 pr-4 py-2 rounded-full bg-gray-100 border-0 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all"
                                placeholder="Search for songs, artists, or playlists"
                         >
-                        <div id="searchResults" class="absolute w-full mt-2 bg-white rounded-lg shadow-lg hidden">
-                            <!-- Search results will be populated here -->
+                        <!-- Search Results -->
+                        <div id="searchResults" class="absolute w-full mt-2 bg-[#1A1A2E] rounded-lg shadow-lg hidden z-50 max-h-96 overflow-y-auto">
+                            <div class="p-4">
+                                <div id="searchResultsContent" class="space-y-4">
+                                    <!-- Results will be populated here -->
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -544,6 +646,7 @@
                         <i class="fa-solid fa-music text-[#E94560] text-2xl mr-2"></i>
                         <span class="text-xl font-bold gradient-text">WT</span>
                     </div>
+                    <button onclick="openAboutModal()" class="bg-gray-800 text-white rounded-full py-2 px-6 font-bold text-sm hover:scale-105 transition-transform">ABOUT</button>
                     <a href="signup.html">
                         <button class="bg-[#E94560] text-white rounded-full py-2 px-6 font-bold text-sm hover:scale-105 transition-transform">SIGN UP</button>
                     </a>
@@ -558,6 +661,169 @@
                 </div>
             </div>
             
+            <!-- About Modal -->
+            <div id="aboutModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+                <div class="bg-[#1A1A2E] rounded-lg p-8 max-w-2xl w-full mx-4">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-white">About Wave Tune</h2>
+                        <button onclick="closeAboutModal()" class="text-gray-400 hover:text-white">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-6 text-gray-300">
+                        <div>
+                            <h3 class="text-xl font-bold text-white mb-2">Our Mission</h3>
+                            <p>Wave Tune is dedicated to providing the best music streaming experience. We believe in connecting people through the universal language of music.</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-xl font-bold text-white mb-2">Features</h3>
+                            <ul class="list-disc list-inside space-y-2">
+                                <li>Stream millions of songs</li>
+                                <li>Create and share playlists</li>
+                                <li>Discover new music</li>
+                                <li>High-quality audio streaming</li>
+                                <li>Cross-platform availability</li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-xl font-bold text-white mb-2">Premium Benefits</h3>
+                            <ul class="list-disc list-inside space-y-2">
+                                <li>Ad-free listening experience</li>
+                                <li>Offline downloads</li>
+                                <li>High-quality audio</li>
+                                <li>Exclusive content</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex justify-center space-x-4 mt-8">
+                            <a href="#" class="text-gray-400 hover:text-white">
+                                <i class="fab fa-facebook text-2xl"></i>
+                            </a>
+                            <a href="#" class="text-gray-400 hover:text-white">
+                                <i class="fab fa-twitter text-2xl"></i>
+                            </a>
+                            <a href="#" class="text-gray-400 hover:text-white">
+                                <i class="fab fa-instagram text-2xl"></i>
+                            </a>
+                            <a href="#" class="text-gray-400 hover:text-white">
+                                <i class="fab fa-youtube text-2xl"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Premium Banner -->
+            <div class="bg-gradient-to-r from-purple-600 to-blue-600 p-4 text-white mb-6">
+                <div class="container mx-auto flex justify-between items-center">
+                    <div>
+                        <h2 class="text-xl font-bold">Upgrade to Premium</h2>
+                        <p class="text-sm opacity-90">Get unlimited access to all features</p>
+                    </div>
+                    <button onclick="openPremiumModal()" class="premium-button bg-white text-purple-600 px-6 py-2 rounded-full font-bold hover:bg-opacity-90 transition-all">
+                        Upgrade Now
+                    </button>
+                </div>
+            </div>
+
+            <!-- Premium Modal -->
+            <div id="premiumModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+                <div class="bg-[#1A1A2E] rounded-lg p-8 max-w-2xl w-full mx-4">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-white">Choose Your Premium Plan</h2>
+                        <button onclick="closePremiumModal()" class="text-gray-400 hover:text-white">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <!-- Monthly Plan -->
+                        <div class="bg-[#2C3E50] rounded-lg p-6 hover:border-2 hover:border-purple-500 transition-all cursor-pointer" onclick="selectPlan('monthly')">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="text-xl font-bold text-white">Monthly</h3>
+                                    <p class="text-gray-400">Billed monthly</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-3xl font-bold text-white">$9.99</span>
+                                    <span class="text-gray-400">/month</span>
+                                </div>
+                            </div>
+                            <ul class="space-y-3 text-gray-300">
+                                <li class="flex items-center">
+                                    <i class="fas fa-check text-green-500 mr-2"></i>
+                                    Ad-free music listening
+                                </li>
+                                <li class="flex items-center">
+                                    <i class="fas fa-check text-green-500 mr-2"></i>
+                                    Download songs
+                                </li>
+                                <li class="flex items-center">
+                                    <i class="fas fa-check text-green-500 mr-2"></i>
+                                    High quality audio
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Yearly Plan -->
+                        <div class="bg-[#2C3E50] rounded-lg p-6 hover:border-2 hover:border-purple-500 transition-all cursor-pointer" onclick="selectPlan('yearly')">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="text-xl font-bold text-white">Yearly</h3>
+                                    <p class="text-gray-400">Billed annually</p>
+                                    <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">Save 20%</span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-3xl font-bold text-white">$99.99</span>
+                                    <span class="text-gray-400">/year</span>
+                                </div>
+                            </div>
+                            <ul class="space-y-3 text-gray-300">
+                                <li class="flex items-center">
+                                    <i class="fas fa-check text-green-500 mr-2"></i>
+                                    All Monthly features
+                                </li>
+                                <li class="flex items-center">
+                                    <i class="fas fa-check text-green-500 mr-2"></i>
+                                    Exclusive content
+                                </li>
+                                <li class="flex items-center">
+                                    <i class="fas fa-check text-green-500 mr-2"></i>
+                                    Priority support
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Payment Form -->
+                    <div id="paymentForm" class="hidden">
+                        <h3 class="text-xl font-bold text-white mb-4">Payment Details</h3>
+                        <form id="premiumPaymentForm" class="space-y-4">
+                            <div>
+                                <label class="block text-gray-400 mb-2">Card Number</label>
+                                <input type="text" placeholder="1234 5678 9012 3456" class="w-full p-3 rounded bg-[#2C3E50] text-white border border-gray-600 focus:border-purple-500 focus:outline-none">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-gray-400 mb-2">Expiry Date</label>
+                                    <input type="text" placeholder="MM/YY" class="w-full p-3 rounded bg-[#2C3E50] text-white border border-gray-600 focus:border-purple-500 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-400 mb-2">CVV</label>
+                                    <input type="text" placeholder="123" class="w-full p-3 rounded bg-[#2C3E50] text-white border border-gray-600 focus:border-purple-500 focus:outline-none">
+                                </div>
+                            </div>
+                            <button type="submit" class="w-full bg-purple-600 text-white py-3 rounded-lg font-bold hover:bg-purple-700 transition-all">
+                                Complete Purchase
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
             <!-- Content Area -->
             <div class="content-wrapper">
                 <div class="flex-1 overflow-y-auto custom-scrollbar bg-gradient-to-b from-[#2C3E50] to-[#1A1A2E] p-8">
@@ -565,7 +831,7 @@
                     
                     <!-- Top Playlists -->
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-                        <a href="#" class="bg-[#16213E] rounded flex items-center overflow-hidden hover:bg-[#1A1A2E] transition-all playlist-card shadow-md">
+                        <a href="liked-songs.html" class="bg-[#16213E] rounded flex items-center overflow-hidden hover:bg-[#1A1A2E] transition-all playlist-card shadow-md">
                             <img src="download.png" alt="Liked Songs" class="w-16 h-16">
                             <span class="font-bold ml-4 text-white">Liked Songs</span>
                         </a>
@@ -612,7 +878,10 @@
                         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-6">
                             <div class="bg-white p-4 rounded-lg hover:bg-gray-50 transition-all playlist-card group shadow-md">
                                 <div class="mb-4 relative">
-                                    <img src="https://i.scdn.co/image/ab67706f00000002fe24d7084be472288cd6ee6c" alt="Daily Mix 1" class="w-full rounded shadow-lg">
+                                    <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&h=500&fit=crop" 
+                                         alt="Daily Mix 1" 
+                                         class="w-full rounded shadow-lg"
+                                         onerror="this.onerror=null; this.src='https://via.placeholder.com/300x300/1DB954/FFFFFF?text=Daily+Mix'">
                                     <button class="absolute bottom-2 right-2 bg-green-500 rounded-full p-3 shadow-lg play-button transform translate-y-2 hover:scale-110 transition-all" onclick="toggleSongPlay(1)">
                                         <i class="fa-solid fa-play text-white play-icon"></i>
                                     </button>
@@ -622,7 +891,10 @@
                             </div>
                             <div class="bg-white p-4 rounded-lg hover:bg-gray-50 transition-all playlist-card group shadow-md">
                                 <div class="mb-4 relative">
-                                    <img src="https://i.scdn.co/image/ab67706f00000002b0fe40a6e1692822f5a9d8f1" alt="Hot Hits 2025" class="w-full rounded shadow-lg">
+                                    <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&h=500&fit=crop" 
+                                         alt="Hot Hits 2025" 
+                                         class="w-full rounded shadow-lg"
+                                         onerror="this.onerror=null; this.src='https://via.placeholder.com/300x300/1DB954/FFFFFF?text=Hot+Hits'">
                                     <button class="absolute bottom-2 right-2 bg-green-500 rounded-full p-3 shadow-lg play-button transform translate-y-2 hover:scale-110 transition-all" onclick="toggleSongPlay(2)">
                                         <i class="fa-solid fa-play text-white play-icon"></i>
                                     </button>
@@ -632,7 +904,10 @@
                             </div>
                             <div class="bg-white p-4 rounded-lg hover:bg-gray-50 transition-all playlist-card group shadow-md">
                                 <div class="mb-4 relative">
-                                    <img src="https://i.scdn.co/image/ab67706f00000002d72ef75e14ca6f60ea2364c2" alt="Chill Lofi Study Beats" class="w-full rounded shadow-lg">
+                                    <img src="https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=500&h=500&fit=crop" 
+                                         alt="Chill Lofi Study Beats" 
+                                         class="w-full rounded shadow-lg"
+                                         onerror="this.onerror=null; this.src='https://via.placeholder.com/300x300/1DB954/FFFFFF?text=Lofi+Beats'">
                                     <button class="absolute bottom-2 right-2 bg-green-500 rounded-full p-3 shadow-lg play-button transform translate-y-2 hover:scale-110 transition-all" onclick="toggleSongPlay(3)">
                                         <i class="fa-solid fa-play text-white play-icon"></i>
                                     </button>
@@ -642,7 +917,10 @@
                             </div>
                             <div class="bg-white p-4 rounded-lg hover:bg-gray-50 transition-all playlist-card group shadow-md">
                                 <div class="mb-4 relative">
-                                    <img src="https://i.scdn.co/image/ab67706f00000002b0fe40a6e1692822f5a9d8f1" alt="Road Trip Mix" class="w-full rounded shadow-lg">
+                                    <img src="https://images.unsplash.com/photo-1507608616759-54f48f0af0ee?w=500&h=500&fit=crop" 
+                                         alt="Road Trip Mix" 
+                                         class="w-full rounded shadow-lg"
+                                         onerror="this.onerror=null; this.src='https://via.placeholder.com/300x300/1DB954/FFFFFF?text=Road+Trip'">
                                     <button class="absolute bottom-2 right-2 bg-green-500 rounded-full p-3 shadow-lg play-button transform translate-y-2 hover:scale-110 transition-all" onclick="toggleSongPlay(4)">
                                         <i class="fa-solid fa-play text-white play-icon"></i>
                                     </button>
@@ -652,7 +930,10 @@
                             </div>
                             <div class="bg-white p-4 rounded-lg hover:bg-gray-50 transition-all playlist-card group shadow-md">
                                 <div class="mb-4 relative">
-                                    <img src="https://i.scdn.co/image/ab67706f00000002b0fe40a6e1692822f5a9d8f1" alt="Workout Motivation" class="w-full rounded shadow-lg">
+                                    <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500&h=500&fit=crop" 
+                                         alt="Workout Motivation" 
+                                         class="w-full rounded shadow-lg"
+                                         onerror="this.onerror=null; this.src='https://via.placeholder.com/300x300/1DB954/FFFFFF?text=Workout'">
                                     <button class="absolute bottom-2 right-2 bg-green-500 rounded-full p-3 shadow-lg play-button transform translate-y-2 hover:scale-110 transition-all" onclick="toggleSongPlay(5)">
                                         <i class="fa-solid fa-play text-white play-icon"></i>
                                     </button>
@@ -662,7 +943,10 @@
                             </div>
                             <div class="bg-white p-4 rounded-lg hover:bg-gray-50 transition-all playlist-card group shadow-md">
                                 <div class="mb-4 relative">
-                                    <img src="https://i.scdn.co/image/ab67706f00000002b0fe40a6e1692822f5a9d8f1" alt="Bollywood Classics" class="w-full rounded shadow-lg">
+                                    <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&h=500&fit=crop" 
+                                         alt="Bollywood Classics" 
+                                         class="w-full rounded shadow-lg"
+                                         onerror="this.onerror=null; this.src='https://via.placeholder.com/300x300/1DB954/FFFFFF?text=Bollywood'">
                                     <button class="absolute bottom-2 right-2 bg-green-500 rounded-full p-3 shadow-lg play-button transform translate-y-2 hover:scale-110 transition-all" onclick="toggleSongPlay(6)">
                                         <i class="fa-solid fa-play text-white play-icon"></i>
                                     </button>
@@ -672,7 +956,10 @@
                             </div>
                             <div class="bg-white p-4 rounded-lg hover:bg-gray-50 transition-all playlist-card group shadow-md">
                                 <div class="mb-4 relative">
-                                    <img src="https://i.scdn.co/image/ab67706f00000002d72ef75e14ca6f60ea2364c2" alt="Punjabi Hits" class="w-full rounded shadow-lg">
+                                    <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&h=500&fit=crop" 
+                                         alt="Punjabi Hits" 
+                                         class="w-full rounded shadow-lg"
+                                         onerror="this.onerror=null; this.src='https://via.placeholder.com/300x300/1DB954/FFFFFF?text=Punjabi'">
                                     <button class="absolute bottom-2 right-2 bg-green-500 rounded-full p-3 shadow-lg play-button transform translate-y-2 hover:scale-110 transition-all" onclick="toggleSongPlay(7)">
                                         <i class="fa-solid fa-play text-white play-icon"></i>
                                     </button>
@@ -772,7 +1059,10 @@
                         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-6">
                             <div class="bg-white p-4 rounded-lg hover:bg-gray-50 transition-all playlist-card group shadow-md">
                                 <div class="mb-4 relative">
-                                    <img src="https://i.scdn.co/image/ab67706f00000002b0fe40a6e1692822f5a9d8f1" alt="Today's Top Hits" class="w-full rounded shadow-lg">
+                                    <img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500&h=500&fit=crop" 
+                                         alt="Today's Top Hits" 
+                                         class="w-full rounded shadow-lg"
+                                         onerror="this.onerror=null; this.src='https://via.placeholder.com/300x300/1DB954/FFFFFF?text=Top+Hits'">
                                     <button class="absolute bottom-2 right-2 bg-green-500 rounded-full p-3 shadow-lg play-button transform translate-y-2 hover:scale-110 transition-all" onclick="toggleSongPlay(15)">
                                         <i class="fa-solid fa-play text-white play-icon"></i>
                                     </button>
@@ -782,7 +1072,10 @@
                             </div>
                             <div class="bg-white p-4 rounded-lg hover:bg-gray-50 transition-all playlist-card group shadow-md">
                                 <div class="mb-4 relative">
-                                    <img src="https://i.scdn.co/image/ab67706f00000002b0fe40a6e1692822f5a9d8f1" alt="RapCaviar" class="w-full rounded shadow-lg">
+                                    <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&h=500&fit=crop" 
+                                         alt="RapCaviar" 
+                                         class="w-full rounded shadow-lg"
+                                         onerror="this.onerror=null; this.src='https://via.placeholder.com/300x300/1DB954/FFFFFF?text=RapCaviar'">
                                     <button class="absolute bottom-2 right-2 bg-green-500 rounded-full p-3 shadow-lg play-button transform translate-y-2 hover:scale-110 transition-all" onclick="toggleSongPlay(16)">
                                         <i class="fa-solid fa-play text-white play-icon"></i>
                                     </button>
@@ -792,7 +1085,10 @@
                             </div>
                             <div class="bg-white p-4 rounded-lg hover:bg-gray-50 transition-all playlist-card group shadow-md">
                                 <div class="mb-4 relative">
-                                    <img src="https://i.scdn.co/image/ab67706f00000002b0fe40a6e1692822f5a9d8f1" alt="All Out 2020s" class="w-full rounded shadow-lg">
+                                    <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&h=500&fit=crop" 
+                                         alt="All Out 2020s" 
+                                         class="w-full rounded shadow-lg"
+                                         onerror="this.onerror=null; this.src='https://via.placeholder.com/300x300/1DB954/FFFFFF?text=2020s'">
                                     <button class="absolute bottom-2 right-2 bg-green-500 rounded-full p-3 shadow-lg play-button transform translate-y-2 hover:scale-110 transition-all" onclick="toggleSongPlay(17)">
                                         <i class="fa-solid fa-play text-white play-icon"></i>
                                     </button>
@@ -802,7 +1098,10 @@
                             </div>
                             <div class="bg-white p-4 rounded-lg hover:bg-gray-50 transition-all playlist-card group shadow-md">
                                 <div class="mb-4 relative">
-                                    <img src="https://i.scdn.co/image/ab67706f00000002b0fe40a6e1692822f5a9d8f1" alt="Rock Classics" class="w-full rounded shadow-lg">
+                                    <img src="https://images.unsplash.com/photo-1507608616759-54f48f0af0ee?w=500&h=500&fit=crop" 
+                                         alt="Rock Classics" 
+                                         class="w-full rounded shadow-lg"
+                                         onerror="this.onerror=null; this.src='https://via.placeholder.com/300x300/1DB954/FFFFFF?text=Rock'">
                                     <button class="absolute bottom-2 right-2 bg-green-500 rounded-full p-3 shadow-lg play-button transform translate-y-2 hover:scale-110 transition-all" onclick="toggleSongPlay(18)">
                                         <i class="fa-solid fa-play text-white play-icon"></i>
                                     </button>
@@ -812,7 +1111,10 @@
                             </div>
                             <div class="bg-white p-4 rounded-lg hover:bg-gray-50 transition-all playlist-card group shadow-md">
                                 <div class="mb-4 relative">
-                                    <img src="https://i.scdn.co/image/ab67706f00000002b0fe40a6e1692822f5a9d8f1" alt="Pop Mix" class="w-full rounded shadow-lg">
+                                    <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500&h=500&fit=crop" 
+                                         alt="Pop Mix" 
+                                         class="w-full rounded shadow-lg"
+                                         onerror="this.onerror=null; this.src='https://via.placeholder.com/300x300/1DB954/FFFFFF?text=Pop'">
                                     <button class="absolute bottom-2 right-2 bg-green-500 rounded-full p-3 shadow-lg play-button transform translate-y-2 hover:scale-110 transition-all" onclick="toggleSongPlay(19)">
                                         <i class="fa-solid fa-play text-white play-icon"></i>
                                     </button>
@@ -822,7 +1124,10 @@
                             </div>
                             <div class="bg-white p-4 rounded-lg hover:bg-gray-50 transition-all playlist-card group shadow-md">
                                 <div class="mb-4 relative">
-                                    <img src="https://i.scdn.co/image/ab67706f00000002d72ef75e14ca6f60ea2364c2" alt="Bollywood Butter" class="w-full rounded shadow-lg">
+                                    <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&h=500&fit=crop" 
+                                         alt="Bollywood Butter" 
+                                         class="w-full rounded shadow-lg"
+                                         onerror="this.onerror=null; this.src='https://via.placeholder.com/300x300/1DB954/FFFFFF?text=Bollywood'">
                                     <button class="absolute bottom-2 right-2 bg-green-500 rounded-full p-3 shadow-lg play-button transform translate-y-2 hover:scale-110 transition-all" onclick="toggleSongPlay(20)">
                                         <i class="fa-solid fa-play text-white play-icon"></i>
                                     </button>
@@ -832,7 +1137,10 @@
                             </div>
                             <div class="bg-white p-4 rounded-lg hover:bg-gray-50 transition-all playlist-card group shadow-md">
                                 <div class="mb-4 relative">
-                                    <img src="https://i.scdn.co/image/ab67706f00000002b0fe40a6e1692822f5a9d8f1" alt="Punjabi 101" class="w-full rounded shadow-lg">
+                                    <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&h=500&fit=crop" 
+                                         alt="Punjabi 101" 
+                                         class="w-full rounded shadow-lg"
+                                         onerror="this.onerror=null; this.src='https://via.placeholder.com/300x300/1DB954/FFFFFF?text=Punjabi'">
                                     <button class="absolute bottom-2 right-2 bg-green-500 rounded-full p-3 shadow-lg play-button transform translate-y-2 hover:scale-110 transition-all" onclick="toggleSongPlay(21)">
                                         <i class="fa-solid fa-play text-white play-icon"></i>
                                     </button>
@@ -938,7 +1246,10 @@
         
         <!-- Song Info -->
         <div class="flex items-center">
-            <img src="/api/placeholder/56/56" alt="Album Cover" class="w-14 h-14 mr-3 rounded shadow-lg pulse-animation">
+            <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&h=500&fit=crop" 
+                 alt="Album Cover" 
+                 class="w-14 h-14 mr-3 rounded shadow-lg pulse-animation"
+                 onerror="this.onerror=null; this.src='https://via.placeholder.com/56x56/1DB954/FFFFFF?text=Album'">
             <div>
                 <h4 class="font-semibold text-sm text-white">Highway to Digital</h4>
                 <p class="text-xs text-gray-400">Web Dev Rockstars</p>
@@ -1274,113 +1585,139 @@
             repeatMode: 'none'
         };
 
-        // Enhanced search functionality
+        // Add these variables at the top of your script
+        const YOUTUBE_API_KEY = 'YOUR_YOUTUBE_API_KEY'; // You'll need to replace this with your actual API key
+        let currentSearchResults = [];
+
+        // Update the search functionality
         async function performSearch(query) {
-            const results = [];
-            
-            // Search in playlists and songs
-            musicData.playlists.forEach(playlist => {
-                if (playlist.name.toLowerCase().includes(query)) {
-                    results.push({
-                        type: 'playlist',
-                        title: playlist.name,
-                        description: `${playlist.songs.length} songs`
-                    });
+            if (query.length < 2) {
+                document.getElementById('searchResults').classList.add('hidden');
+                return;
+            }
+
+            try {
+                // Show loading state
+                const searchResultsContent = document.getElementById('searchResultsContent');
+                searchResultsContent.innerHTML = '<div class="text-center text-gray-400">Searching...</div>';
+                document.getElementById('searchResults').classList.remove('hidden');
+
+                // Search YouTube
+                const response = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query + ' music')}&type=video&maxResults=10&key=${YOUTUBE_API_KEY}`);
+                const data = await response.json();
+
+                if (data.items && data.items.length > 0) {
+                    currentSearchResults = data.items;
+                    displaySearchResults(data.items);
+                } else {
+                    searchResultsContent.innerHTML = '<div class="text-center text-gray-400">No results found</div>';
                 }
-                
-                // Search in songs
-                playlist.songs.forEach(song => {
-                    if (song.title.toLowerCase().includes(query) || song.artist.toLowerCase().includes(query)) {
-                        results.push({
-                            type: 'song',
-                            title: song.title,
-                            artist: song.artist,
-                            cover: song.cover,
-                            id: song.id
-                        });
-                    }
-                });
+            } catch (error) {
+                console.error('Search error:', error);
+                document.getElementById('searchResultsContent').innerHTML = 
+                    '<div class="text-center text-red-400">Error searching for songs. Please try again.</div>';
+            }
+        }
+
+        function displaySearchResults(results) {
+            const searchResultsContent = document.getElementById('searchResultsContent');
+            searchResultsContent.innerHTML = results.map((item, index) => `
+                <div class="flex items-center space-x-4 p-2 hover:bg-[#2C3E50] rounded-lg cursor-pointer" 
+                     onclick="playSearchResult(${index})">
+                    <img src="${item.snippet.thumbnails.default.url}" 
+                         alt="${item.snippet.title}" 
+                         class="w-16 h-16 rounded">
+                    <div class="flex-1">
+                        <h4 class="text-white font-medium">${item.snippet.title}</h4>
+                        <p class="text-gray-400 text-sm">${item.snippet.channelTitle}</p>
+                    </div>
+                    <button class="text-[#E94560] hover:text-[#FF6B6B]">
+                        <i class="fas fa-play"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function playSearchResult(index) {
+            const video = currentSearchResults[index];
+            if (!video) return;
+
+            // Update player UI
+            const audio = document.getElementById('audioPlayer');
+            const songTitle = document.querySelector('.player-bar h4');
+            const songArtist = document.querySelector('.player-bar p');
+            const albumCover = document.querySelector('.player-bar img');
+
+            // Update player information
+            songTitle.textContent = video.snippet.title;
+            songArtist.textContent = video.snippet.channelTitle;
+            albumCover.src = video.snippet.thumbnails.high.url;
+
+            // Create a YouTube iframe player
+            const playerDiv = document.createElement('div');
+            playerDiv.id = 'youtubePlayer';
+            playerDiv.style.display = 'none';
+            document.body.appendChild(playerDiv);
+
+            // Initialize YouTube player
+            new YT.Player('youtubePlayer', {
+                height: '0',
+                width: '0',
+                videoId: video.id.videoId,
+                playerVars: {
+                    'autoplay': 1,
+                    'controls': 0
+                },
+                events: {
+                    'onStateChange': onPlayerStateChange
+                }
             });
 
-            return results;
+            // Hide search results
+            document.getElementById('searchResults').classList.add('hidden');
         }
 
-        // Enhanced search results display
-        function displaySearchResults(results) {
-            const searchResults = document.getElementById('searchResults');
-            if (!results.length) {
-                searchResults.classList.add('hidden');
-                return;
-            }
-
-            searchResults.innerHTML = results.map(item => {
-                if (item.type === 'song') {
-                    return `
-                        <div class="p-3 hover:bg-gray-50 cursor-pointer" onclick="playSearchResult(${item.id})">
-                            <div class="flex items-center">
-                                <img src="${item.cover}" alt="${item.title}" class="w-12 h-12 rounded mr-3">
-                                <div>
-                                    <div class="font-medium">${item.title}</div>
-                                    <div class="text-sm text-gray-500">Song • ${item.artist}</div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    return `
-                        <div class="p-3 hover:bg-gray-50 cursor-pointer" onclick="loadPlaylist('${item.title}')">
-                            <div class="flex items-center">
-                                <i class="fa-solid fa-list text-gray-400 mr-3"></i>
-                                <div>
-                                    <div class="font-medium">${item.title}</div>
-                                    <div class="text-sm text-gray-500">Playlist • ${item.description}</div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }
-            }).join('');
-
-            searchResults.classList.remove('hidden');
-        }
-
-        // Play search result
-        function playSearchResult(songId) {
-            // Find the song in playlists
-            for (const playlist of musicData.playlists) {
-                const song = playlist.songs.find(s => s.id === songId);
-                if (song) {
-                    musicData.currentPlaylist = playlist;
-                    loadSong(song);
-                    document.getElementById('searchResults').classList.add('hidden');
-                    return;
-                }
+        function onPlayerStateChange(event) {
+            if (event.data === YT.PlayerState.ENDED) {
+                // Handle song end
+                musicData.isPlaying = false;
+                updatePlayPauseIcon();
             }
         }
 
-        // Load playlist
-        function loadPlaylist(playlistName) {
-            const playlist = musicData.playlists.find(p => p.name === playlistName);
-            if (playlist) {
-                musicData.currentPlaylist = playlist;
-                if (playlist.songs.length > 0) {
-                    loadSong(playlist.songs[0]);
-                }
+        // Update the search input event listener
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            if (query.length >= 2) {
+                performSearch(query);
+            } else {
                 document.getElementById('searchResults').classList.add('hidden');
             }
-        }
-
-        // Update search input event listener
-        searchInput.addEventListener('input', async (e) => {
-            const query = e.target.value.toLowerCase();
-            if (query.length < 2) {
-                searchResults.classList.add('hidden');
-                return;
-            }
-
-            const results = await performSearch(query);
-            displaySearchResults(results);
         });
+
+        // Add YouTube API script
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        // Initialize YouTube API
+        window.onYouTubeIframeAPIReady = function() {
+            console.log('YouTube API Ready');
+        };
+
+        // Update the togglePlay function to handle YouTube playback
+        function togglePlay() {
+            if (window.youtubePlayer) {
+                if (musicData.isPlaying) {
+                    window.youtubePlayer.pauseVideo();
+                } else {
+                    window.youtubePlayer.playVideo();
+                }
+                musicData.isPlaying = !musicData.isPlaying;
+                updatePlayPauseIcon();
+            }
+        }
 
         // Initialize player
         document.addEventListener('DOMContentLoaded', () => {
@@ -1392,13 +1729,7 @@
                 if (link.textContent.includes('Liked Songs')) {
                     link.addEventListener('click', function(e) {
                         e.preventDefault();
-                        console.log('Liked Songs clicked');
-                        const likedSongsPlaylist = musicData.playlists.find(p => p.name === "Liked Songs");
-                        if (likedSongsPlaylist && likedSongsPlaylist.songs.length > 0) {
-                            console.log('Loading first song:', likedSongsPlaylist.songs[0]);
-                            musicData.currentPlaylist = likedSongsPlaylist;
-                            loadSong(likedSongsPlaylist.songs[0]);
-                        }
+                        window.location.href = 'liked-songs.html';
                     });
                 }
             });
@@ -1643,6 +1974,47 @@
             if (playPauseIcon) {
                 playPauseIcon.className = isPlaying ? 'fas fa-pause' : 'fas fa-play';
             }
+        }
+
+        // Add premium modal functions
+        function openPremiumModal() {
+            document.getElementById('premiumModal').classList.remove('hidden');
+            document.getElementById('premiumModal').classList.add('flex');
+        }
+
+        function closePremiumModal() {
+            document.getElementById('premiumModal').classList.add('hidden');
+            document.getElementById('premiumModal').classList.remove('flex');
+            document.getElementById('paymentForm').classList.add('hidden');
+        }
+
+        function selectPlan(plan) {
+            const paymentForm = document.getElementById('paymentForm');
+            paymentForm.classList.remove('hidden');
+            
+            // Scroll to payment form
+            paymentForm.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Handle premium payment form submission
+        document.getElementById('premiumPaymentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Here you would typically handle the payment processing
+            // For demo purposes, we'll just show a success message
+            alert('Thank you for your purchase! Your premium subscription is now active.');
+            closePremiumModal();
+        });
+
+        // Add these functions to your existing script
+        function openAboutModal() {
+            document.getElementById('aboutModal').classList.remove('hidden');
+            document.getElementById('aboutModal').classList.add('flex');
+        }
+
+        function closeAboutModal() {
+            document.getElementById('aboutModal').classList.add('hidden');
+            document.getElementById('aboutModal').classList.remove('flex');
         }
     </script>
 </body>

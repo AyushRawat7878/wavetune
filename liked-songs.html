@@ -130,6 +130,114 @@
     </style>
 </head>
 <body>
+    <!-- Premium Banner -->
+    <div class="bg-gradient-to-r from-purple-600 to-blue-600 p-4 text-white">
+        <div class="container mx-auto flex justify-between items-center">
+            <div>
+                <h2 class="text-xl font-bold">Upgrade to Premium</h2>
+                <p class="text-sm opacity-90">Get unlimited access to all features</p>
+            </div>
+            <button onclick="openPremiumModal()" class="bg-white text-purple-600 px-6 py-2 rounded-full font-bold hover:bg-opacity-90 transition-all">
+                Upgrade Now
+            </button>
+        </div>
+    </div>
+
+    <!-- Premium Modal -->
+    <div id="premiumModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-[#1A1A2E] rounded-lg p-8 max-w-2xl w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-white">Choose Your Premium Plan</h2>
+                <button onclick="closePremiumModal()" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <!-- Monthly Plan -->
+                <div class="bg-[#2C3E50] rounded-lg p-6 hover:border-2 hover:border-purple-500 transition-all cursor-pointer" onclick="selectPlan('monthly')">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-xl font-bold text-white">Monthly</h3>
+                            <p class="text-gray-400">Billed monthly</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-3xl font-bold text-white">$9.99</span>
+                            <span class="text-gray-400">/month</span>
+                        </div>
+                    </div>
+                    <ul class="space-y-3 text-gray-300">
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-2"></i>
+                            Ad-free music listening
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-2"></i>
+                            Download songs
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-2"></i>
+                            High quality audio
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Yearly Plan -->
+                <div class="bg-[#2C3E50] rounded-lg p-6 hover:border-2 hover:border-purple-500 transition-all cursor-pointer" onclick="selectPlan('yearly')">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-xl font-bold text-white">Yearly</h3>
+                            <p class="text-gray-400">Billed annually</p>
+                            <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">Save 20%</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-3xl font-bold text-white">$99.99</span>
+                            <span class="text-gray-400">/year</span>
+                        </div>
+                    </div>
+                    <ul class="space-y-3 text-gray-300">
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-2"></i>
+                            All Monthly features
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-2"></i>
+                            Exclusive content
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-2"></i>
+                            Priority support
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Payment Form -->
+            <div id="paymentForm" class="hidden">
+                <h3 class="text-xl font-bold text-white mb-4">Payment Details</h3>
+                <form id="premiumPaymentForm" class="space-y-4">
+                    <div>
+                        <label class="block text-gray-400 mb-2">Card Number</label>
+                        <input type="text" placeholder="1234 5678 9012 3456" class="w-full p-3 rounded bg-[#2C3E50] text-white border border-gray-600 focus:border-purple-500 focus:outline-none">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-gray-400 mb-2">Expiry Date</label>
+                            <input type="text" placeholder="MM/YY" class="w-full p-3 rounded bg-[#2C3E50] text-white border border-gray-600 focus:border-purple-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-gray-400 mb-2">CVV</label>
+                            <input type="text" placeholder="123" class="w-full p-3 rounded bg-[#2C3E50] text-white border border-gray-600 focus:border-purple-500 focus:outline-none">
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-purple-600 text-white py-3 rounded-lg font-bold hover:bg-purple-700 transition-all">
+                        Complete Purchase
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Top Bar -->
     <div class="bg-black p-4 flex justify-between items-center sticky top-0 z-10 shadow-md">
         <div class="flex items-center space-x-4">
@@ -216,64 +324,65 @@
         const musicData = {
             currentPlaylist: null,
             currentSongIndex: 0,
-            playlists: [
+            playlists: [],
+            currentSong: null,
+            isPlaying: false,
+            sampleSongs: [
                 {
                     id: 1,
-                    name: "Liked Songs",
-                    songs: [
-                        { 
-                            id: 1, 
-                            title: "Sunshine", 
-                            artist: "OneRepublic", 
-                            duration: "2:43", 
-                            cover: "https://i.scdn.co/image/ab67616d0000b273c288028f259525923d94b3f7",
-                            genre: "Pop",
-                            features: ["upbeat", "summer", "feel-good"],
-                            mood: "happy"
-                        },
-                        { 
-                            id: 2, 
-                            title: "Love Me Like You Do", 
-                            artist: "Ellie Goulding", 
-                            duration: "4:12", 
-                            cover: "https://i.scdn.co/image/ab67616d0000b2732e8ed79e177ff6011076f5f5",
-                            genre: "Pop",
-                            features: ["romantic", "emotional", "ballad"],
-                            mood: "romantic"
-                        },
-                        { 
-                            id: 3, 
-                            title: "Sunflower", 
-                            artist: "Post Malone & Swae Lee", 
-                            duration: "2:38", 
-                            cover: "https://i.scdn.co/image/ab67616d0000b273b1c4b76e23414c9f20242268",
-                            genre: "Hip-Hop",
-                            features: ["upbeat", "summer", "collaboration"],
-                            mood: "energetic"
-                        },
-                        {
-                            id: 101,
-                            title: "Night Sky Hip Hop",
-                            artist: "Michael Ramir C.",
-                            duration: "4:17", // Approximate duration from Mixkit
-                            cover: "https://via.placeholder.com/40", // Placeholder cover
-                            genre: "Hip-Hop",
-                            features: ["intense", "motivational", "synth"],
-                            mood: "aggressive"
-                        }
-                    ]
+                    title: "Acoustic Breeze",
+                    artist: "Benjamin Tissot",
+                    duration: "3:45",
+                    cover: "https://i.scdn.co/image/ab67616d0000b273c288028f259525923d94b3f7",
+                    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+                },
+                {
+                    id: 2,
+                    title: "Summer Walk",
+                    artist: "Benjamin Tissot",
+                    duration: "2:58",
+                    cover: "https://i.scdn.co/image/ab67616d0000b2732e8ed79e177ff6011076f5f5",
+                    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"
+                },
+                {
+                    id: 3,
+                    title: "Memories",
+                    artist: "Benjamin Tissot",
+                    duration: "3:15",
+                    cover: "https://i.scdn.co/image/ab67616d0000b273b1c4b76e23414c9f20242268",
+                    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"
+                },
+                {
+                    id: 4,
+                    title: "Creative Minds",
+                    artist: "Benjamin Tissot",
+                    duration: "2:45",
+                    cover: "https://i.scdn.co/image/ab67616d0000b273c288028f259525923d94b3f7",
+                    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3"
                 }
-            ],
-            currentSong: null,
-            isPlaying: false
+            ]
         };
 
         // Initialize the page
         document.addEventListener('DOMContentLoaded', () => {
+            // Load data from localStorage
+            const savedPlaylists = localStorage.getItem('playlists');
+            if (savedPlaylists) {
+                musicData.playlists = JSON.parse(savedPlaylists);
+            }
+
+            // If no liked songs in localStorage, use sample songs
             const likedSongsPlaylist = musicData.playlists.find(p => p.name === "Liked Songs");
-            if (likedSongsPlaylist) {
+            if (likedSongsPlaylist && likedSongsPlaylist.songs.length > 0) {
                 musicData.currentPlaylist = likedSongsPlaylist;
                 displaySongs(likedSongsPlaylist.songs);
+            } else {
+                // Create a new liked songs playlist with sample songs
+                musicData.currentPlaylist = {
+                    name: "Liked Songs",
+                    songs: musicData.sampleSongs
+                };
+                displaySongs(musicData.sampleSongs);
             }
             initializePlayer();
         });
@@ -444,24 +553,40 @@
             currentTitle.textContent = song.title;
             currentArtist.textContent = song.artist;
 
+            // Set loading state
+            setLoading(true);
+
             // Set audio source and handle errors
-            audio.src = song.audioUrl || `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${song.id}.mp3`;
+            audio.src = song.audioUrl;
             
-            // Play with error handling
-            const playPromise = audio.play();
-            if (playPromise !== undefined) {
-                playPromise.then(() => {
-                    musicData.currentSong = song;
-                    musicData.isPlaying = true;
-                    updatePlayPauseIcon();
-                    updatePlayButtons();
-                }).catch(error => {
-                    console.error('Playback failed:', error);
-                    alert('Unable to play the song. Please try again.');
-                    musicData.isPlaying = false;
-                    updatePlayPauseIcon();
-                });
-            }
+            // Add error handling for audio loading
+            audio.onerror = function() {
+                console.error('Error loading audio:', song.title);
+                setLoading(false);
+                alert('Error loading the song. Please try another one.');
+                musicData.isPlaying = false;
+                updatePlayPauseIcon();
+            };
+
+            // Add loaded event handler
+            audio.onloadeddata = function() {
+                setLoading(false);
+                // Play with error handling
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        musicData.currentSong = song;
+                        musicData.isPlaying = true;
+                        updatePlayPauseIcon();
+                        updatePlayButtons();
+                    }).catch(error => {
+                        console.error('Playback failed:', error);
+                        alert('Unable to play the song. Please try again.');
+                        musicData.isPlaying = false;
+                        updatePlayPauseIcon();
+                    });
+                }
+            };
         }
 
         function togglePlay() {
@@ -498,13 +623,15 @@
             return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
         }
 
-        // Add loading state
+        // Update the setLoading function
         function setLoading(isLoading) {
             const playPauseIcon = document.getElementById('playPauseIcon');
             if (isLoading) {
                 playPauseIcon.className = 'fas fa-spinner fa-spin';
+                playPauseIcon.style.pointerEvents = 'none';
             } else {
                 updatePlayPauseIcon();
+                playPauseIcon.style.pointerEvents = 'auto';
             }
         }
 
@@ -525,6 +652,36 @@
                 playSong(songId);
             }
         }
+
+        // Add these new functions for premium features
+        function openPremiumModal() {
+            document.getElementById('premiumModal').classList.remove('hidden');
+            document.getElementById('premiumModal').classList.add('flex');
+        }
+
+        function closePremiumModal() {
+            document.getElementById('premiumModal').classList.add('hidden');
+            document.getElementById('premiumModal').classList.remove('flex');
+            document.getElementById('paymentForm').classList.add('hidden');
+        }
+
+        function selectPlan(plan) {
+            const paymentForm = document.getElementById('paymentForm');
+            paymentForm.classList.remove('hidden');
+            
+            // Scroll to payment form
+            paymentForm.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Handle premium payment form submission
+        document.getElementById('premiumPaymentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Here you would typically handle the payment processing
+            // For demo purposes, we'll just show a success message
+            alert('Thank you for your purchase! Your premium subscription is now active.');
+            closePremiumModal();
+        });
     </script>
 </body>
 </html> 
