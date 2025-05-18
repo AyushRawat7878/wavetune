@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liked Songs - Wave Tune</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-bg: #2C3E50;
+            --secondary-bg: #1A1A2E;
+            --text-primary: #ffffff;
+            --text-secondary: #a0aec0;
+            --accent-color: #E94560;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(to bottom, var(--primary-bg), var(--secondary-bg));
+            min-height: 100vh;
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            padding-bottom: 80px; /* Space for player bar */
+        }
+
+        .song-row {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .song-row:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        .play-button {
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: scale(0.8);
+        }
+
+        .song-row:hover .play-button {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .play-button i {
+            transition: all 0.3s ease;
+        }
+
+        .play-button:hover i {
+            transform: scale(1.2);
+        }
+
+        .play-button.playing {
+            background-color: #E94560 !important;
+            opacity: 1;
+        }
+
+        .play-button.playing i {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .gradient-text {
+            background: linear-gradient(45deg, #E94560, #FF6B6B);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% 200%;
+            animation: gradient 3s ease infinite;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .player-bar {
+            backdrop-filter: blur(10px);
+            background: rgba(26, 26, 46, 0.95);
+        }
+
+        .progress-bar {
+            cursor: pointer;
+            transition: height 0.2s;
+        }
+
+        .progress-bar:hover {
+            height: 6px;
+        }
+
+        .progress-bar .progress {
+            transition: width 0.1s linear;
+        }
+
+        /* Loading animation */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .fa-spinner {
+            animation: spin 1s linear infinite;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Bar -->
+    <div class="bg-black p-4 flex justify-between items-center sticky top-0 z-10 shadow-md">
+        <div class="flex items-center space-x-4">
+            <a href="index.html" class="text-white hover:text-gray-300 transition-colors">
+                <i class="fa-solid fa-chevron-left"></i>
+            </a>
+            <img src="download.png" alt="Liked Songs Icon" class="w-8 h-8">
+            <h1 class="text-2xl font-bold gradient-text">Liked Songs</h1>
+        </div>
+        <div class="flex items-center space-x-4">
+            <button class="text-gray-400 hover:text-white transition-colors" id="shuffleBtn">
+                <i class="fas fa-random"></i>
+            </button>
+            <button class="text-gray-400 hover:text-white transition-colors" id="repeatBtn">
+                <i class="fas fa-redo"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Songs List -->
+    <div class="container mx-auto px-4 py-8">
+        <div class="bg-[#1A1A2E] rounded-lg shadow-lg overflow-hidden">
+            <div class="p-4 border-b border-gray-700">
+                <div class="grid grid-cols-12 gap-4 text-gray-400 text-sm font-medium">
+                    <div class="col-span-1">#</div>
+                    <div class="col-span-5">Title</div>
+                    <div class="col-span-4">Artist</div>
+                    <div class="col-span-2 text-right">Duration</div>
+                </div>
+            </div>
+            <div id="songsList" class="divide-y divide-gray-700 max-h-[calc(100vh-250px)] overflow-y-auto">
+                <!-- Songs will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Player Bar -->
+    <div class="player-bar fixed bottom-0 left-0 right-0 border-t border-gray-700 p-3 grid grid-cols-3 items-center shadow-lg">
+        <audio id="audioPlayer" preload="metadata"></audio>
+        
+        <!-- Song Info -->
+        <div class="flex items-center">
+            <img id="currentCover" src="" alt="Album Cover" class="w-14 h-14 mr-3 rounded shadow-lg">
+            <div>
+                <h4 id="currentTitle" class="font-semibold text-sm text-white truncate max-w-[200px]"></h4>
+                <p id="currentArtist" class="text-xs text-gray-400 truncate max-w-[200px]"></p>
+            </div>
+        </div>
+        
+        <!-- Player Controls -->
+        <div class="flex flex-col items-center justify-center">
+            <div class="flex items-center justify-center space-x-4 mb-1">
+                <button class="text-gray-400 hover:text-white transition-colors" id="prevBtn">
+                    <i class="fas fa-step-backward"></i>
+                </button>
+                <button class="text-gray-400 hover:text-white transition-colors" id="playPauseBtn">
+                    <i class="fas fa-play" id="playPauseIcon"></i>
+                </button>
+                <button class="text-gray-400 hover:text-white transition-colors" id="nextBtn">
+                    <i class="fas fa-step-forward"></i>
+                </button>
+            </div>
+            <div class="w-full flex items-center text-xs space-x-2">
+                <span class="text-gray-400" id="currentTime">0:00</span>
+                <div class="h-1 bg-gray-700 rounded-full flex-1 progress-bar" id="progressBar">
+                    <div class="h-full w-0 bg-[#E94560] rounded-full progress" id="progress"></div>
+                </div>
+                <span class="text-gray-400" id="duration">0:00</span>
+            </div>
+        </div>
+
+        <!-- Volume Control -->
+        <div class="flex items-center justify-end space-x-2">
+            <button class="text-gray-400 hover:text-white transition-colors" id="volumeBtn">
+                <i class="fas fa-volume-up" id="volumeIcon"></i>
+            </button>
+            <div class="w-24 h-1 bg-gray-700 rounded-full progress-bar" id="volumeBar">
+                <div class="h-full w-2/3 bg-gray-400 rounded-full progress" id="volumeLevel"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const musicData = {
+            currentPlaylist: null,
+            currentSongIndex: 0,
+            playlists: [
+                {
+                    id: 1,
+                    name: "Liked Songs",
+                    songs: [
+                        { 
+                            id: 1, 
+                            title: "Sunshine", 
+                            artist: "OneRepublic", 
+                            duration: "2:43", 
+                            cover: "https://i.scdn.co/image/ab67616d0000b273c288028f259525923d94b3f7",
+                            genre: "Pop",
+                            features: ["upbeat", "summer", "feel-good"],
+                            mood: "happy"
+                        },
+                        { 
+                            id: 2, 
+                            title: "Love Me Like You Do", 
+                            artist: "Ellie Goulding", 
+                            duration: "4:12", 
+                            cover: "https://i.scdn.co/image/ab67616d0000b2732e8ed79e177ff6011076f5f5",
+                            genre: "Pop",
+                            features: ["romantic", "emotional", "ballad"],
+                            mood: "romantic"
+                        },
+                        { 
+                            id: 3, 
+                            title: "Sunflower", 
+                            artist: "Post Malone & Swae Lee", 
+                            duration: "2:38", 
+                            cover: "https://i.scdn.co/image/ab67616d0000b273b1c4b76e23414c9f20242268",
+                            genre: "Hip-Hop",
+                            features: ["upbeat", "summer", "collaboration"],
+                            mood: "energetic"
+                        },
+                        {
+                            id: 101,
+                            title: "Night Sky Hip Hop",
+                            artist: "Michael Ramir C.",
+                            duration: "4:17", // Approximate duration from Mixkit
+                            cover: "https://via.placeholder.com/40", // Placeholder cover
+                            genre: "Hip-Hop",
+                            features: ["intense", "motivational", "synth"],
+                            mood: "aggressive"
+                        }
+                    ]
+                }
+            ],
+            currentSong: null,
+            isPlaying: false
+        };
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', () => {
+            const likedSongsPlaylist = musicData.playlists.find(p => p.name === "Liked Songs");
+            if (likedSongsPlaylist) {
+                musicData.currentPlaylist = likedSongsPlaylist;
+                displaySongs(likedSongsPlaylist.songs);
+            }
+            initializePlayer();
+        });
+
+        function displaySongs(songs) {
+            const songsList = document.getElementById('songsList');
+            if (!songs || songs.length === 0) {
+                songsList.innerHTML = `
+                    <div class="p-8 text-center text-gray-400">
+                        No songs found in your liked songs.
+                    </div>
+                `;
+                return;
+            }
+
+            songsList.innerHTML = songs.map((song, index) => `
+                <div class="song-row grid grid-cols-12 gap-4 p-4 items-center hover:bg-gray-800 cursor-pointer" 
+                     onclick="playSong(${song.id})"
+                     onmouseover="this.style.backgroundColor='rgba(255,255,255,0.1)'"
+                     onmouseout="this.style.backgroundColor=''">
+                    <div class="col-span-1 text-gray-400">${index + 1}</div>
+                    <div class="col-span-5 flex items-center">
+                        <img src="${song.cover}" alt="${song.title}" class="w-10 h-10 rounded mr-3" 
+                             onerror="this.src='https://via.placeholder.com/40'">
+                        <span>${song.title}</span>
+                    </div>
+                    <div class="col-span-4 text-gray-400">${song.artist}</div>
+                    <div class="col-span-2 text-right text-gray-400 flex items-center justify-end">
+                        <span class="mr-4">${song.duration}</span>
+                        <button class="play-button bg-[#E94560] rounded-full p-2 text-white" 
+                                onclick="event.stopPropagation(); togglePlayForSong(${song.id})">
+                            <i class="fas fa-play"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function playSong(songId) {
+            const songIndex = musicData.currentPlaylist.songs.findIndex(s => s.id === songId);
+            if (songIndex !== -1) {
+                musicData.currentSongIndex = songIndex;
+                loadSong(musicData.currentPlaylist.songs[songIndex]);
+                updatePlayButtons();
+            }
+        }
+
+        function playNextSong() {
+            if (!musicData.currentPlaylist) return;
+            
+            musicData.currentSongIndex = (musicData.currentSongIndex + 1) % musicData.currentPlaylist.songs.length;
+            loadSong(musicData.currentPlaylist.songs[musicData.currentSongIndex]);
+            updatePlayButtons();
+        }
+
+        function updatePlayButtons() {
+            // Remove playing class from all buttons
+            document.querySelectorAll('.play-button').forEach(btn => {
+                btn.classList.remove('playing');
+                const icon = btn.querySelector('i');
+                icon.className = 'fas fa-play';
+            });
+
+            // Add playing class to current song's button
+            if (musicData.currentSong) {
+                const currentButton = document.querySelector(`.play-button[onclick*="togglePlayForSong(${musicData.currentSong.id})"]`);
+                if (currentButton) {
+                    currentButton.classList.add('playing');
+                    const icon = currentButton.querySelector('i');
+                    icon.className = musicData.isPlaying ? 'fas fa-pause' : 'fas fa-play';
+                }
+            }
+        }
+
+        function initializePlayer() {
+            const audio = document.getElementById('audioPlayer');
+            const playPauseBtn = document.getElementById('playPauseBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const progressBar = document.getElementById('progressBar');
+            const progress = document.getElementById('progress');
+            const currentTimeSpan = document.getElementById('currentTime');
+            const durationSpan = document.getElementById('duration');
+            const volumeBar = document.getElementById('volumeBar');
+            const volumeLevel = document.getElementById('volumeLevel');
+            const volumeBtn = document.getElementById('volumeBtn');
+            const volumeIcon = document.getElementById('volumeIcon');
+
+            // Set initial volume
+            audio.volume = 0.7;
+            volumeLevel.style.width = '70%';
+
+            // Add error handling for audio
+            audio.addEventListener('error', (e) => {
+                console.error('Audio error:', e);
+                alert('Error loading audio. Please try another song.');
+                musicData.isPlaying = false;
+                updatePlayPauseIcon();
+            });
+
+            playPauseBtn.addEventListener('click', () => {
+                if (!audio.src) {
+                    // If no song is loaded, load the first song from the current playlist
+                    if (musicData.currentPlaylist && musicData.currentPlaylist.songs.length > 0) {
+                        loadSong(musicData.currentPlaylist.songs[0]);
+                    } else {
+                        console.log('No playlist or songs available');
+                        return;
+                    }
+                }
+                togglePlay();
+            });
+
+            nextBtn.addEventListener('click', playNextSong);
+
+            progressBar.addEventListener('click', (e) => {
+                if (audio.duration) {
+                    const percent = e.offsetX / progressBar.offsetWidth;
+                    audio.currentTime = percent * audio.duration;
+                }
+            });
+
+            // Volume control
+            volumeBar.addEventListener('click', (e) => {
+                const percent = e.offsetX / volumeBar.offsetWidth;
+                audio.volume = percent;
+                volumeLevel.style.width = `${percent * 100}%`;
+                updateVolumeIcon(percent);
+            });
+
+            audio.addEventListener('timeupdate', () => {
+                if (audio.duration) {
+                    const percent = (audio.currentTime / audio.duration) * 100;
+                    progress.style.width = `${percent}%`;
+                    currentTimeSpan.textContent = formatTime(audio.currentTime);
+                }
+            });
+
+            audio.addEventListener('loadedmetadata', () => {
+                durationSpan.textContent = formatTime(audio.duration);
+            });
+
+            // Volume button
+            volumeBtn.addEventListener('click', () => {
+                if (audio.volume > 0) {
+                    audio.volume = 0;
+                    volumeLevel.style.width = '0%';
+                } else {
+                    audio.volume = 0.7;
+                    volumeLevel.style.width = '70%';
+                }
+                updateVolumeIcon(audio.volume);
+            });
+
+            // Handle audio ending
+            audio.addEventListener('ended', () => {
+                playNextSong();
+            });
+        }
+
+        function loadSong(song) {
+            const audio = document.getElementById('audioPlayer');
+            const currentCover = document.getElementById('currentCover');
+            const currentTitle = document.getElementById('currentTitle');
+            const currentArtist = document.getElementById('currentArtist');
+
+            // Update UI first
+            currentCover.src = song.cover;
+            currentTitle.textContent = song.title;
+            currentArtist.textContent = song.artist;
+
+            // Set audio source and handle errors
+            audio.src = song.audioUrl || `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${song.id}.mp3`;
+            
+            // Play with error handling
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    musicData.currentSong = song;
+                    musicData.isPlaying = true;
+                    updatePlayPauseIcon();
+                    updatePlayButtons();
+                }).catch(error => {
+                    console.error('Playback failed:', error);
+                    alert('Unable to play the song. Please try again.');
+                    musicData.isPlaying = false;
+                    updatePlayPauseIcon();
+                });
+            }
+        }
+
+        function togglePlay() {
+            const audio = document.getElementById('audioPlayer');
+            if (!audio.src) {
+                console.log('No audio source available');
+                return;
+            }
+
+            if (musicData.isPlaying) {
+                audio.pause();
+            } else {
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.error('Playback failed:', error);
+                        alert('Unable to play the song. Please try again.');
+                    });
+                }
+            }
+            musicData.isPlaying = !musicData.isPlaying;
+            updatePlayPauseIcon();
+            updatePlayButtons();
+        }
+
+        function updatePlayPauseIcon() {
+            const playPauseIcon = document.getElementById('playPauseIcon');
+            playPauseIcon.className = musicData.isPlaying ? 'fas fa-pause' : 'fas fa-play';
+        }
+
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = Math.floor(seconds % 60);
+            return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+
+        // Add loading state
+        function setLoading(isLoading) {
+            const playPauseIcon = document.getElementById('playPauseIcon');
+            if (isLoading) {
+                playPauseIcon.className = 'fas fa-spinner fa-spin';
+            } else {
+                updatePlayPauseIcon();
+            }
+        }
+
+        // Add keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                togglePlay();
+            } else if (e.code === 'ArrowRight') {
+                playNextSong();
+            }
+        });
+
+        function togglePlayForSong(songId) {
+            if (musicData.currentSong && musicData.currentSong.id === songId) {
+                togglePlay();
+            } else {
+                playSong(songId);
+            }
+        }
+    </script>
+</body>
+</html> 
