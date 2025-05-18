@@ -1399,9 +1399,17 @@
     </div>
 
     <script>
-        // Remove Spotify API Configuration and Integration
+        // Global variables and state management
         const musicData = {
             currentPlaylist: null,
+            currentSong: null,
+            isPlaying: false,
+            isShuffled: false,
+            repeatMode: 'none',
+            youtubePlayer: null,
+            currentSearchResults: [],
+            volume: 0.7,
+            isMuted: false,
             playlists: [
                 {
                     id: 1,
@@ -1578,12 +1586,259 @@
                         }
                     ]
                 }
-            ],
-            currentSong: null,
-            isPlaying: false,
-            isShuffled: false,
-            repeatMode: 'none'
+            ]
         };
+
+        // Error handling utility
+        function handleError(error, message = 'An error occurred') {
+            console.error(error);
+            showNotification(message, 'error');
+        }
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+                type === 'error' ? 'bg-red-500' : 'bg-green-500'
+            } text-white`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+
+        // Initialize all components
+        function initializeApp() {
+            try {
+                initializePlayer();
+                initializeSearch();
+                initializeEventListeners();
+                loadUserPreferences();
+            } catch (error) {
+                console.error('Initialization error:', error);
+                // Silently handle initialization errors
+            }
+        }
+
+        // Initialize player with error handling
+        function initializePlayer() {
+            try {
+                const audio = document.getElementById('audioPlayer');
+                if (!audio) throw new Error('Audio player not found');
+
+                // Set initial volume
+                audio.volume = musicData.volume;
+                updateVolumeUI();
+
+                // Add error handling for audio
+                audio.addEventListener('error', (e) => {
+                    handleError(e, 'Error playing audio');
+                    musicData.isPlaying = false;
+                    updatePlayPauseIcon();
+                });
+
+                // Handle audio ending
+                audio.addEventListener('ended', handleAudioEnd);
+            } catch (error) {
+                handleError(error, 'Failed to initialize player');
+            }
+        }
+
+        // Initialize search functionality
+        function initializeSearch() {
+            const searchInput = document.getElementById('searchInput');
+            if (!searchInput) return;
+
+            let searchTimeout;
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                const query = e.target.value.trim();
+                
+                if (query.length >= 2) {
+                    searchTimeout = setTimeout(() => performSearch(query), 300);
+                } else {
+                    document.getElementById('searchResults').classList.add('hidden');
+                }
+            });
+        }
+
+        // Initialize event listeners
+        function initializeEventListeners() {
+            // Player controls
+            document.getElementById('playPauseBtn')?.addEventListener('click', togglePlay);
+            document.getElementById('nextBtn')?.addEventListener('click', playNext);
+            document.getElementById('prevBtn')?.addEventListener('click', playPrevious);
+            document.getElementById('shuffleBtn')?.addEventListener('click', toggleShuffle);
+            document.getElementById('repeatBtn')?.addEventListener('click', toggleRepeat);
+
+            // Volume controls
+            const volumeBar = document.getElementById('volumeBar');
+            if (volumeBar) {
+                volumeBar.addEventListener('click', handleVolumeChange);
+            }
+
+            // Progress bar
+            const progressBar = document.getElementById('progressBar');
+            if (progressBar) {
+                progressBar.addEventListener('click', handleProgressChange);
+            }
+
+            // Close search results when clicking outside
+            document.addEventListener('click', (e) => {
+                const searchResults = document.getElementById('searchResults');
+                const searchInput = document.getElementById('searchInput');
+                if (!searchResults?.contains(e.target) && !searchInput?.contains(e.target)) {
+                    searchResults?.classList.add('hidden');
+                }
+            });
+        }
+
+        // Load user preferences
+        function loadUserPreferences() {
+            try {
+                const savedVolume = localStorage.getItem('volume');
+                const savedTheme = localStorage.getItem('theme');
+                
+                if (savedVolume) {
+                    musicData.volume = parseFloat(savedVolume);
+                    updateVolumeUI();
+                }
+                
+                if (savedTheme) {
+                    document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+                }
+            } catch (error) {
+                handleError(error, 'Failed to load preferences');
+            }
+        }
+
+        // Save user preferences
+        function saveUserPreferences() {
+            try {
+                localStorage.setItem('volume', musicData.volume.toString());
+                localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+            } catch (error) {
+                handleError(error, 'Failed to save preferences');
+            }
+        }
+
+        // Handle volume change
+        function handleVolumeChange(e) {
+            try {
+                const volumeBar = document.getElementById('volumeBar');
+                const percent = e.offsetX / volumeBar.offsetWidth;
+                musicData.volume = Math.max(0, Math.min(1, percent));
+                updateVolumeUI();
+                saveUserPreferences();
+            } catch (error) {
+                handleError(error, 'Failed to change volume');
+            }
+        }
+
+        // Update volume UI
+        function updateVolumeUI() {
+            try {
+                const audio = document.getElementById('audioPlayer');
+                const volumeLevel = document.getElementById('volumeLevel');
+                const volumeIcon = document.getElementById('volumeIcon');
+                
+                if (audio) audio.volume = musicData.volume;
+                if (volumeLevel) volumeLevel.style.width = `${musicData.volume * 100}%`;
+                if (volumeIcon) {
+                    volumeIcon.className = musicData.volume === 0 ? 'fas fa-volume-mute' :
+                        musicData.volume < 0.5 ? 'fas fa-volume-down' : 'fas fa-volume-up';
+                }
+            } catch (error) {
+                handleError(error, 'Failed to update volume UI');
+            }
+        }
+
+        // Handle progress change
+        function handleProgressChange(e) {
+            try {
+                const progressBar = document.getElementById('progressBar');
+                const audio = document.getElementById('audioPlayer');
+                if (!progressBar || !audio) return;
+
+                const percent = e.offsetX / progressBar.offsetWidth;
+                audio.currentTime = percent * audio.duration;
+            } catch (error) {
+                handleError(error, 'Failed to change progress');
+            }
+        }
+
+        // Handle audio end
+        function handleAudioEnd() {
+            try {
+                if (musicData.repeatMode === 'one') {
+                    const audio = document.getElementById('audioPlayer');
+                    audio.currentTime = 0;
+                    audio.play();
+                } else if (musicData.repeatMode === 'all' || musicData.currentPlaylist) {
+                    playNext();
+                } else {
+                    musicData.isPlaying = false;
+                    updatePlayPauseIcon();
+                }
+            } catch (error) {
+                handleError(error, 'Failed to handle audio end');
+            }
+        }
+
+        // Toggle play/pause with error handling
+        function togglePlay() {
+            try {
+                if (musicData.youtubePlayer) {
+                    if (musicData.isPlaying) {
+                        musicData.youtubePlayer.pauseVideo();
+                    } else {
+                        musicData.youtubePlayer.playVideo();
+                    }
+                } else {
+                    const audio = document.getElementById('audioPlayer');
+                    if (!audio.src) {
+                        if (musicData.currentPlaylist?.songs.length > 0) {
+                            loadSong(musicData.currentPlaylist.songs[0]);
+                        } else {
+                            showNotification('No song selected', 'error');
+                            return;
+                        }
+                    }
+
+                    if (musicData.isPlaying) {
+                        audio.pause();
+                    } else {
+                        const playPromise = audio.play();
+                        if (playPromise !== undefined) {
+                            playPromise.catch(error => {
+                                handleError(error, 'Failed to play audio');
+                            });
+                        }
+                    }
+                }
+                musicData.isPlaying = !musicData.isPlaying;
+                updatePlayPauseIcon();
+            } catch (error) {
+                handleError(error, 'Failed to toggle play');
+            }
+        }
+
+        // Update play/pause icon
+        function updatePlayPauseIcon() {
+            try {
+                const playPauseIcon = document.getElementById('playPauseIcon');
+                if (playPauseIcon) {
+                    playPauseIcon.className = musicData.isPlaying ? 'fas fa-pause' : 'fas fa-play';
+                }
+            } catch (error) {
+                handleError(error, 'Failed to update play/pause icon');
+            }
+        }
+
+        // Initialize the app when the DOM is loaded
+        document.addEventListener('DOMContentLoaded', initializeApp);
+
+        // Handle window unload
+        window.addEventListener('beforeunload', saveUserPreferences);
 
         // Add these variables at the top of your script
         const YOUTUBE_API_KEY = 'YOUR_YOUTUBE_API_KEY'; // You'll need to replace this with your actual API key
@@ -1998,12 +2253,27 @@
 
         // Handle premium payment form submission
         document.getElementById('premiumPaymentForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+            e.preventDefault(); // Prevent form submission
             
-            // Here you would typically handle the payment processing
-            // For demo purposes, we'll just show a success message
-            alert('Thank you for your purchase! Your premium subscription is now active.');
+            // Get form values
+            const cardNumber = this.querySelector('input[placeholder="1234 5678 9012 3456"]').value;
+            const expiryDate = this.querySelector('input[placeholder="MM/YY"]').value;
+            const cvv = this.querySelector('input[placeholder="123"]').value;
+            
+            // Basic validation
+            if (!cardNumber || !expiryDate || !cvv) {
+                showNotification('Please fill in all payment details', 'error');
+                return;
+            }
+            
+            // Show success message
+            showNotification('Thank you for your purchase! Your premium subscription is now active.', 'success');
+            
+            // Close the modal
             closePremiumModal();
+            
+            // Reset the form
+            this.reset();
         });
 
         // Add these functions to your existing script
